@@ -1,8 +1,7 @@
 import concurrent.futures
 import csv
 import os
-from sklearn.metrics import accuracy_score, log_loss, confusion_matrix
-from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, log_loss, hinge_loss, confusion_matrix
 import pandas as pd
 import torch
 
@@ -142,9 +141,13 @@ def load_client_data(base_path, device=None):
     return client_data
 
 
-def compute_metrics(y_true, y_pred, y_prob):
+def compute_metrics(y_true, y_pred, y_prob=None):
     accuracy = accuracy_score(y_true, y_pred)
-    loss = log_loss(y_true, y_prob, labels=[0, 1])
+
+    if y_prob is None:
+        loss = hinge_loss(y_true, y_pred, labels=[-1, 1])
+    else:
+        loss = log_loss(y_true, y_prob, labels=[0, 1])
 
     confusion_vals = confusion_matrix(y_true, y_pred).ravel()
     if len(confusion_vals) == 4:

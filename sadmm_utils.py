@@ -1,9 +1,6 @@
 from utils import compute_metrics
 import numpy as np
 
-np.random.seed(10)
-
-
 def get_value(data, node_id, neighbour_id):
     try:
         neighbour_data = data[(node_id, neighbour_id)]
