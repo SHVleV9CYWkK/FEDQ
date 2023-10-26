@@ -35,9 +35,11 @@ class LocalSVM:
         all_val_measures = {'accuracy': [], 'fpr': [], 'tpr': [], 'ber': [], 'loss': []}
 
         if cross_evaluate:
+            count = 0
             for clf in self.svm_classifiers:
                 if clf is None:
                     continue
+                count += 1
                 for x_train, y_train in self.train_set:
                     y_pred_train = clf.predict(x_train)
                     accuracy, loss, fpr, tpr, ber = compute_metrics(y_train, y_pred_train)
@@ -55,6 +57,15 @@ class LocalSVM:
                     all_val_measures['fpr'].append(fpr)
                     all_val_measures['tpr'].append(tpr)
                     all_val_measures['ber'].append(ber)
+
+            global_train_measures = {}
+            global_val_measures = {}
+            for key in all_train_measures:
+                global_train_measures[key] = (sum(all_train_measures[key][idx] for idx, _ in
+                                                  enumerate(all_train_measures['accuracy']))
+                                              / (len(self.train_set) * count))
+                global_val_measures[key] = (sum(all_val_measures[key][idx] for idx, _ in
+                                                enumerate(all_val_measures['accuracy'])) / (len(self.val_set) * count))
         else:
             for idx, clf in enumerate(self.svm_classifiers):
                 if clf is None:
@@ -82,13 +93,13 @@ class LocalSVM:
                 all_val_measures['tpr'].append(tpr)
                 all_val_measures['ber'].append(ber)
 
-        global_train_measures = {}
-        global_val_measures = {}
-        for key in all_train_measures:
-            global_train_measures[key] = sum(all_train_measures[key][idx] for idx, _ in
-                                             enumerate(all_train_measures['accuracy'])) / len(self.train_set)
-            global_val_measures[key] = sum(all_val_measures[key][idx] for idx, _ in
-                                           enumerate(all_val_measures['accuracy'])) / len(self.val_set)
+            global_train_measures = {}
+            global_val_measures = {}
+            for key in all_train_measures:
+                global_train_measures[key] = sum(all_train_measures[key][idx] for idx, _ in
+                                                 enumerate(all_train_measures['accuracy'])) / len(self.train_set)
+                global_val_measures[key] = sum(all_val_measures[key][idx] for idx, _ in
+                                               enumerate(all_val_measures['accuracy'])) / len(self.val_set)
 
         print("Global Train Set Loss:", global_train_measures['loss'])
         print("Global Train Set Accuracy:", global_train_measures['accuracy'])
@@ -106,9 +117,11 @@ class LocalSVM:
     def calculate_measures_test_set(self, cross_evaluate=True):
         all_test_measures = {'accuracy': [], 'fpr': [], 'tpr': [], 'ber': [], 'loss': []}
         if cross_evaluate:
+            count = 0
             for clf in self.svm_classifiers:
                 if clf is None:
                     continue
+                count += 1
                 for x_val, y_val in self.val_set:
                     y_pred_val = clf.predict(x_val)
                     accuracy, loss, fpr, tpr, ber = compute_metrics(y_val, y_pred_val)
@@ -117,6 +130,11 @@ class LocalSVM:
                     all_test_measures['fpr'].append(fpr)
                     all_test_measures['tpr'].append(tpr)
                     all_test_measures['ber'].append(ber)
+                global_test_measures = {}
+                for key in all_test_measures:
+                    global_test_measures[key] = (sum(all_test_measures[key][idx] for idx, _ in
+                                                     enumerate(all_test_measures['accuracy']))
+                                                 / (len(self.test_set) * count))
         else:
             for idx, clf in enumerate(self.svm_classifiers):
                 if clf is None:
@@ -130,9 +148,9 @@ class LocalSVM:
                 all_test_measures['tpr'].append(tpr)
                 all_test_measures['ber'].append(ber)
 
-        global_test_measures = {}
-        for key in all_test_measures:
-            global_test_measures[key] = sum(all_test_measures[key][idx]
-                                            for idx, _ in enumerate(all_test_measures['accuracy'])) / len(self.test_set)
+            global_test_measures = {}
+            for key in all_test_measures:
+                global_test_measures[key] = sum(all_test_measures[key][idx] for idx, _ in
+                                                enumerate(all_test_measures['accuracy'])) / len(self.test_set)
 
         return global_test_measures
