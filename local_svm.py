@@ -93,6 +93,12 @@ class LocalSVM:
                 all_val_measures['tpr'].append(tpr)
                 all_val_measures['ber'].append(ber)
 
+            print("max:", max(all_val_measures['accuracy']))
+            print("min:", min(all_val_measures['accuracy']))
+            min_v = min(all_val_measures['accuracy'])
+            index = all_val_measures['accuracy'].index(min_v)
+            print("min_index", index)
+
             global_train_measures = {}
             global_val_measures = {}
             for key in all_train_measures:
@@ -100,6 +106,8 @@ class LocalSVM:
                                                  enumerate(all_train_measures['accuracy'])) / len(self.train_set)
                 global_val_measures[key] = sum(all_val_measures[key][idx] for idx, _ in
                                                enumerate(all_val_measures['accuracy'])) / len(self.val_set)
+
+
 
         print("Global Train Set Loss:", global_train_measures['loss'])
         print("Global Train Set Accuracy:", global_train_measures['accuracy'])
