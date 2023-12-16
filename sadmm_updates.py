@@ -1,7 +1,9 @@
+import builtins
+
 from cvxpy import *
 import numpy as np
-from numpy import linalg as LA
 import pandas as pd
+from numpy import linalg as LA
 
 
 def eval_gradient(a_prev, x_i, y_i, gamma):
@@ -33,27 +35,27 @@ def stochastic_x_update(data):
     df = pd.DataFrame(np.concatenate((X, y.reshape(len(y), 1)), axis=1))
     dim_X = df.shape
 
-    sample_size = 1
-    sample = df.sample(sample_size, replace=True)
-    y_idx = sample.shape[1] - 1
-    X = np.array(sample.drop(columns=[y_idx]))
-    y = np.array(sample[y_idx]).reshape((sample_size, ))
-    y = y.reshape(len(y), 1)
-    n = dim_X[1] - 1
-    a = Variable((n, 1))
-    gamma = 0.1
-    grad = hinge_loss(a_prev.T, X, y)
-    # time-varying loss function
-    g = sum(multiply(np.asmatrix(grad), a)) + gamma * (sum(multiply(a_prev, a))) + ((square(norm(a - a_prev))) / (2 * mu))
-    f = 0
-    for id in range(int(len(neighbour_data) / 2)):
-        z = np.asmatrix(neighbour_data[id * 2]).T
-        u = np.asmatrix(neighbour_data[id * 2 + 1]).T
-        f = f + rho / 2 * square(norm(a - z + u))
-    objective = Minimize(50 * g + 50 * f)
-    p = Problem(objective)
-    try:
-        result = p.solve()
+    sample_size = 10
+    results = []
+    for index in range(sample_size):
+        sample = df.sample(1, replace=True)
+        y_idx = sample.shape[1] - 1
+        X = np.array(sample.drop(columns=[y_idx]))
+        y = np.array(sample[y_idx]).reshape((1, ))
+        y = y.reshape(len(y), 1)
+        n = dim_X[1] - 1
+        a = Variable((n, 1))
+        gamma = 0.1
+        grad = hinge_loss(a_prev.T, X, y)
+        g = sum(multiply(np.asmatrix(grad), a)) + gamma * (sum(multiply(a_prev, a))) + ((square(norm(a - a_prev))) / (2 * mu))
+        f = 0
+        for id in range(int(len(neighbour_data) / 2)):
+            z = np.asmatrix(neighbour_data[id * 2]).T
+            u = np.asmatrix(neighbour_data[id * 2 + 1]).T
+            f = f + rho / 2 * square(norm(a - z + u))
+        objective = Minimize(50 * g + 50 * f)
+        p = Problem(objective)
+        result = p.solve(solver=CVXOPT)
         if result is None:
             objective = Minimize(50 * g + 51 * f)
             p = Problem(objective)
@@ -63,28 +65,8 @@ def stochastic_x_update(data):
                 objective = Minimize(52 * g + 50 * f)
                 p = Problem(objective)
                 p.solve(verbose=False)
-    except SolverError as e:
-        try:
-            objective = Minimize(50 * g + 51 * f)
-            p = Problem(objective)
-            result = p.solve(verbose=False)
-            if result is None:
-                print("SCALING BUG")  # CVXOPT scaling issue (rarely occurs)
-                objective = Minimize(52 * g + 50 * f)
-                p = Problem(objective)
-                p.solve(verbose=False)
-        except:
-            result = p.solve(solver=CVXOPT)
-            if result is None:
-                objective = Minimize(50 * g + 51 * f)
-                p = Problem(objective)
-                result = p.solve(verbose=False)
-                if result is None:
-                    print("SCALING BUG")  # CVXOPT scaling issue (rarely occurs)
-                    objective = Minimize(52 * g + 50 * f)
-                    p = Problem(objective)
-                    p.solve(verbose=False)
-    return a.value
+        results.append(a.value)
+    return np.mean(np.array(results), axis=0)
 
 
 # def x_update(data):

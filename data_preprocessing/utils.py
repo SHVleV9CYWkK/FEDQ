@@ -49,6 +49,18 @@ def parse_args():
         type=int,
         default=54)
 
+    parser.add_argument(
+        '--flip_rate',
+        help='probability of random reversal, default is 0.1',
+        type=float,
+        default=0.1)
+
+    parser.add_argument(
+        '--noise_level',
+        help='Gaussian noise intensity, default is 0.1',
+        type=float,
+        default=0.1)
+
     return parser.parse_args()
 
 

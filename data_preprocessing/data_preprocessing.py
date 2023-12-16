@@ -50,7 +50,7 @@ def preprocess_data(dataset, dataset_name):
     return all_data
 
 
-def encode_and_scale(dataset_name, train_data, val_data, test_data):
+def encode_and_scale(dataset_name, train_data, val_data, test_data, flip_rate=0.1, noise=0.1):
     X_train = train_data.iloc[:, :-1]
     y_train = train_data.iloc[:, -1]
 
@@ -93,9 +93,9 @@ def encode_and_scale(dataset_name, train_data, val_data, test_data):
 
         noisy_columns = list(range(train_scaled.shape[1]))
 
-    train_scaled = add_gaussian_noise(train_scaled, noisy_columns, mean=0, std_dev=0.1)
-    val_scaled = add_gaussian_noise(val_scaled, noisy_columns, mean=0, std_dev=0.1)
-    test_scaled = add_gaussian_noise(test_scaled, noisy_columns, mean=0, std_dev=0.1)
+    train_scaled = add_gaussian_noise(train_scaled, noisy_columns, mean=0, std_dev=noise)
+    # val_scaled = add_gaussian_noise(val_scaled, noisy_columns, mean=0, std_dev=noise)
+    # test_scaled = add_gaussian_noise(test_scaled, noisy_columns, mean=0, std_dev=noise)
 
     train_final = pd.concat([pd.DataFrame(train_scaled, columns=X_train.columns), y_train.reset_index(drop=True)],
                             axis=1)
@@ -103,9 +103,9 @@ def encode_and_scale(dataset_name, train_data, val_data, test_data):
     test_final = pd.concat([pd.DataFrame(test_scaled, columns=X_test.columns), y_test.reset_index(drop=True)],
                            axis=1)
 
-    train_final = add_flip_noise(train_final, train_final.columns[-1], 0.05)
-    # val_final = add_flip_noise(val_final, val_final.columns[-1], 0.05)
-    # test_final = add_flip_noise(test_final, test_final.columns[-1], 0.05)
+    train_final = add_flip_noise(train_final, train_final.columns[-1], flip_rate)
+    # val_final = add_flip_noise(val_final, val_final.columns[-1], flip_rate)
+    # test_final = add_flip_noise(test_final, test_final.columns[-1], flip_rate)
 
     return train_final, val_final, test_final
 
@@ -151,7 +151,8 @@ if __name__ == '__main__':
             class_counts = client_data.iloc[:, -1].value_counts()
             train_val_data, test_data = train_test_split(client_data, test_size=0.2, shuffle=True, random_state=args.seed)
             train_data, val_data = train_test_split(train_val_data, test_size=0.2, shuffle=True, random_state=args.seed)
-            train_data, val_data, test_data = encode_and_scale(dataset_name, train_data, val_data, test_data)
+            train_data, val_data, test_data = encode_and_scale(dataset_name, train_data, val_data, test_data,
+                                                               args.flip_rate, args.noise_level)
             client_dir = os.path.join(splited_path, f"client_{client_id}")
             os.makedirs(client_dir, exist_ok=True)
 
@@ -164,7 +165,8 @@ if __name__ == '__main__':
         print("Generating training set, validation set and test set")
         train_val_data, test_data = train_test_split(dataset, test_size=0.2, shuffle=True, random_state=args.seed)
         train_data, val_data = train_test_split(train_val_data, test_size=0.2, shuffle=True, random_state=args.seed)
-        train_data, val_data, test_data = encode_and_scale(dataset_name, train_data, val_data, test_data)
+        train_data, val_data, test_data = encode_and_scale(dataset_name, train_data, val_data, test_data,
+                                                           args.flip_rate, args.noise_level)
 
         print("Saving")
         save_dir = os.path.join("../", dataset_name, 'unsplit')

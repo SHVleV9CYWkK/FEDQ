@@ -53,6 +53,7 @@ class ClientSelector:
         self.enable = hyperparameters['enable']
         self.is_train = hyperparameters['is_train']
         self.type = hyperparameters['type_name']
+        self.random_select_list = None
         self.clients = clients
 
         if not self.enable:
@@ -104,11 +105,13 @@ class ClientSelector:
         return self.clients
 
     def __random_select(self, global_model_params_list=None, new_client_module_lists=None):
-        shuffled_clients = self.clients.copy()
-        random.shuffle(shuffled_clients)
-        selected_clients = shuffled_clients[:self.select_num]
-        indices = [client.id for client in shuffled_clients]
-        return selected_clients, indices
+        if self.random_select_list is None:
+            shuffled_clients = self.clients.copy()
+            random.shuffle(shuffled_clients)
+            selected_clients = shuffled_clients[:self.select_num]
+            indices = [client.id for client in shuffled_clients]
+            self.random_select_list = selected_clients, indices
+        return self.random_select_list
 
     def __dqn_select(self, global_module_list, client_module_lists):
         if global_module_list is None:
